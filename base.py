@@ -127,6 +127,26 @@ def create_order():
     hungryId = "kVPzQNpR0h"
     selectedFoodItems = ["JnogXVpUsk"]
 
+    connection.request('GET', '/1/classes/Cook/'+cookId, '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+        "Content-Type": "application/json" 
+    })
+    result = json.loads(connection.getresponse().read())
+    if(result['capacityRemaining'] == 0):
+        return "Limit reached"
+
+    connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
+       "capacityRemaining": {
+            "__op": "Increment",
+            "amount": -1
+        }
+    }), {
+       "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+       "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+       "Content-Type": "application/json"
+    })
+    result = json.loads(connection.getresponse().read())
     connection.request('POST', '/1/classes/Order', json.dumps({
         "cookId": cookId,
         "hungryId": hungryId,
@@ -136,7 +156,8 @@ def create_order():
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
-    result = json.loads(connection.getresponse().read())   
+    result = json.loads(connection.getresponse().read())
+
     return result['objectId']
 
 
@@ -145,7 +166,7 @@ def create_cook():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
     user_id = "ulR5Pcv0Qw" # Wont be using POST. Will have to take from user logged in
-    capacity_remaining = 3
+    capacity_remaining = 2
     startTime = "2015-02-28T02:06:57.931Z"
     endTime = "2015-02-28T12:06:57.931Z"
     category = "Oriental"
