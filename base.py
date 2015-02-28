@@ -3,6 +3,20 @@ import json, httplib, urllib
 app = Flask(__name__)
 
 # --------- GET calls------------------------
+@app.route('/get_cook', methods=['GET'])
+def get_cooks():
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    connection.request('GET', '/1/classes/Cook/', '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    })
+    result = json.loads(connection.getresponse().read())
+    print(result)
+    print(type(result))
+    print(json.dumps(result))
+    print(type(json.dumps(result)))
+    return json.dumps(result)
 
 
 @app.route('/get_menu/<menu_id>', methods=['GET'])
@@ -46,46 +60,76 @@ def get_order(order_id):
 
 #--------Create Menu, Cook, Order----------------------------------------------
 
+
+@app.route('/create_food', methods=['POST'])
+def create_food():
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    name = "Pad Thai"
+    description = "Steamed vegetables fried with noodles, and tofu"
+    dietaryRestriction = "None"
+    spicyLevel = 2
+    connection.request('POST', '/1/classes/Food', json.dumps({
+        "name": name,
+        "description": description,
+        "dietaryRestriction": dietaryRestriction,
+        "spicyLevel": spicyLevel,
+    }), {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+        "Content-Type": "application/json"
+    })
+    result = json.loads(connection.getresponse().read())    
+    return result['objectId']
+
+
 @app.route('/create_menu', methods=['POST'])
 def create_menu():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
+    arrayFoodIds = ["JnogXVpUsk", "YFbATirCJ4"]
+    cookId = "me36TAsNuN"
     connection.request('POST', '/1/classes/Menu', json.dumps({
-        "Description": "Pad Thai", # request.form['Description'],
-        "Category": "Thai", # request.form['Category'],
-        "dietaryRestriction": "None", # request.form['dietaryRestriction']
-        "spicyLevel": 3,
-        "price": 4,
+        "arrayFoodIds": arrayFoodIds, # request.form['Description'],
     }), {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())
-    # If successful, result contains objectId, and createdAt
-    # In case of an error, result contains the error message
-    return result['objectId'] # This should be a success message or error message
+    menu_id = result['objectId']
+
+    # Update cook with menu_id
+
+    connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
+       "menuId": menu_id
+    }), {
+       "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+       "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+       "Content-Type": "application/json"
+    })
+    return menu_id # This should be a success message or error message
 
 
 @app.route('/create_order', methods=['POST'])
 def create_order():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    cook_id = "8sCez1IjcN"
-    hungry_id = "someUserId"
+    cookId = "me36TAsNuN"
+    hungryId = "kVPzQNpR0h"
+    selectedFoodItems = ["JnogXVpUsk"]
 
-    # Ultimately, we need the cookId and the hungryId
-    # But we may have to take cookId off of menuId
     connection.request('POST', '/1/classes/Order', json.dumps({
-        "cookId": cook_id,
-        "hungryId": hungry_id,
+        "cookId": cookId,
+        "hungryId": hungryId,
+        "selectedFoodItems": selectedFoodItems,
     }), {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())   
-    return "result"
+    return result['objectId']
 
 
 @app.route('/create_cook', methods=['POST'])
@@ -93,28 +137,30 @@ def create_cook():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
     user_id = "ulR5Pcv0Qw" # Wont be using POST. Will have to take from user logged in
-    menu_id = "U6v3vOo8no"
     capacity_remaining = 3
+    startTime = "2015-02-28T02:06:57.931Z"
+    endTime = "2015-02-28T12:06:57.931Z"
+    category = "Oriental"
     # TODOCreate only if prev user_id not used
     connection.request('POST', '/1/classes/Cook', json.dumps({
         "userId": user_id, # request.form['Description'],
         "capacityRemaining": capacity_remaining, # request.form['Category'],
-        "menuId": menu_id,
         "endTime": {
             "__type": "Date",
-            "iso": "2015-02-28T12:06:57.931Z", #request.form['endTime']
+            "iso": endTime, #request.form['endTime']
         },
         "startTime": {
             "__type": "Date",
-            "iso": "2015-02-28T02:06:57.931Z", #request.form['endTime']
+            "iso": startTime, #request.form['endTime']
         },
+        "category": category,
     }), {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read()) 
-    return "result"
+    return result['objectId']
 
 
 # --Get Menu/Menus--------------------------------------------------------------------
@@ -139,8 +185,10 @@ def update_capacity_remaining(cook_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json" 
     })
-    if(request.capacityRemaining == 0):
+    result = json.loads(connection.getresponse().read())
+    if(result['capacityRemaining'] == 0):
         return "Limit reached"
+
     connection.request('PUT', '/1/classes/Cook/'+cook_id, json.dumps({
        "capacityRemaining": {
             "__op": "Increment",
