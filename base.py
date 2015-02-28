@@ -2,7 +2,10 @@ from flask import Flask, request
 import json, httplib, urllib
 app = Flask(__name__)
 
+
 # --------- GET calls------------------------
+
+
 @app.route('/get_cook', methods=['GET'])
 def get_cooks():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
@@ -12,10 +15,18 @@ def get_cooks():
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    print(result)
-    print(type(result))
-    print(json.dumps(result))
-    print(type(json.dumps(result)))
+    return json.dumps(result)
+
+
+@app.route('/get_menu', methods=['GET'])
+def get_menus():
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    connection.request('GET', '/1/classes/Menu/', '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    }) 
+    result = json.loads(connection.getresponse().read())
     return json.dumps(result)
 
 
@@ -28,8 +39,7 @@ def get_menu(menu_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    # result is the JSON representation of the menu object requested
-    return result
+    return json.dumps(result)
 
 
 @app.route('/get_cook/<cook_id>', methods=['GET'])
@@ -41,8 +51,7 @@ def get_cook(cook_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    # result is the JSON representation of the menu object requested
-    return result
+    return json.dumps(result)
 
 
 @app.route('/get_order/<order_id>', methods=['GET'])
@@ -54,8 +63,7 @@ def get_order(order_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    # result is the JSON representation of the menu object requested
-    return result
+    return json.dumps(result)
 
 
 #--------Create Menu, Cook, Order----------------------------------------------
@@ -161,16 +169,6 @@ def create_cook():
     })
     result = json.loads(connection.getresponse().read()) 
     return result['objectId']
-
-
-# --Get Menu/Menus--------------------------------------------------------------------
-
-
-@app.route('/get_all_menus', methods=['GET'])
-def get_all_menus():
-    connection = httplib.HTTPSConnection('api.parse.com', 443)
-    connection.connect()
-    connection.request('GET', '/1/classes/Menu', )    
 
 
 # --Update------------------------------------------------------------------
