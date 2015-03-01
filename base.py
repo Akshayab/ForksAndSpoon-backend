@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, Response
 import json, httplib, urllib
 app = Flask(__name__)
 
@@ -15,7 +15,7 @@ def get_cooks():
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    return json.dumps(result)
+    return Response(json.dumps(result),  mimetype='application/json')
 
 
 @app.route('/get_menu', methods=['GET'])
@@ -27,19 +27,19 @@ def get_menus():
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     }) 
     result = json.loads(connection.getresponse().read())
-    return json.dumps(result)
+    return Response(json.dumps(result),  mimetype='application/json')
 
 
-@app.route('/get_menu/<menu_id>', methods=['GET'])
-def get_menu(menu_id):
+@app.route('/get_menu/<menuId>', methods=['GET'])
+def get_menu(menuId):
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    connection.request('GET', '/1/classes/Menu/'+menu_id, '', {
+    connection.request('GET', '/1/classes/Menu/'+menuId, '', {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    return json.dumps(result)
+    return Response(json.dumps(result),  mimetype='application/json')
 
 
 @app.route('/get_cook/<cook_id>', methods=['GET'])
@@ -51,7 +51,7 @@ def get_cook(cook_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    return json.dumps(result)
+    return Response(json.dumps(result),  mimetype='application/json')
 
 
 @app.route('/get_order/<order_id>', methods=['GET'])
@@ -63,7 +63,7 @@ def get_order(order_id):
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
     result = json.loads(connection.getresponse().read())
-    return json.dumps(result)
+    return Response(json.dumps(result),  mimetype='application/json')
 
 
 #--------Create Menu, Cook, Order----------------------------------------------
@@ -73,10 +73,11 @@ def get_order(order_id):
 def create_food():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    name = "Fried Curry"
-    description = "Spicy curry with rice and mushrooms"
-    dietaryRestriction = "None"
-    spicyLevel = 2
+    jsonObj = request.json
+    name = jsonObj['name']
+    description = jsonObj['description']
+    dietaryRestriction = jsonObj['dietaryRestriction']
+    spicyLevel = jsonObj['spicyLevel']
     connection.request('POST', '/1/classes/Food', json.dumps({
         "name": name,
         "description": description,
@@ -88,44 +89,47 @@ def create_food():
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())    
-    return json.dumps(result)
+    return Response(json.dumps({'foodId': result['objectId']}),  mimetype='application/json')
 
 
 @app.route('/create_menu', methods=['POST'])
 def create_menu():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    arrayFoodIds = ["PzwiaogTBV", "Gx3zkAqNwv", "lewSwgVOWR"]
-    cookId = "6VRX7zmp0v"
+    jsonObj = request.json
+    arrayFoodIds = jsonObj['arrayFoodIds']
+    cookId = jsonObj['cookId']
     connection.request('POST', '/1/classes/Menu', json.dumps({
-        "arrayFoodIds": arrayFoodIds, # request.form['Description'],
+        "arrayFoodIds": arrayFoodIds,
+        "cookId": cookId,
     }), {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())
-    menu_id = result['objectId']
+    menuId = result['objectId']
 
     # Update cook with menu_id
 
     connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
-       "menuId": menu_id
+       "menuId": menuId
     }), {
        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
        "Content-Type": "application/json"
     })
-    return json.dumps(result) # This should be a success message or error message
+    return Response(json.dumps({"menuId": menuId}),  mimetype='application/json') # This should be a success message or error message
 
 
 @app.route('/create_order', methods=['POST'])
 def create_order():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    cookId = "6VRX7zmp0v"
-    hungryId = "kVPzQNpR0h"
-    selectedFoodItems = ["PzwiaogTBV", "lewSwgVOWR"]
+    jsonObj = request.json
+    cookId = jsonObj['cookId']
+    hungryId = jsonObj['hungryId'] # hard coded userId
+    selectedFoodItems = jsonObj['selectedFoodItems']
 
     connection.request('GET', '/1/classes/Cook/'+cookId, '', {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
@@ -134,7 +138,7 @@ def create_order():
     })
     result = json.loads(connection.getresponse().read())
     if(result['capacityRemaining'] == 0):
-        return json.dumps({'error': "Sorry, capacity limit reached"})
+        return Response(json.dumps({'error': "Sorry, capacity limit reached"}),  mimetype='application/json')
 
     connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
        "capacityRemaining": {
@@ -157,23 +161,23 @@ def create_order():
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())
-
-    return json.dumps(result)
+    return Response(json.dumps({'orderId': result['objectId']}),  mimetype='application/json')
 
 
 @app.route('/create_cook', methods=['POST'])
 def create_cook():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    user_id = "ulR5Pcv0Qw" # Wont be using POST. Will have to take from user logged in
-    capacity_remaining = 2
-    startTime = "2015-02-28T02:06:57.931Z"
-    endTime = "2015-02-28T12:06:57.931Z"
-    category = "Indian"
+    jsonObj = request.json
+    userId = jsonObj['userId'] # Wont be using POST. Will have to take from user logged in
+    capacityRemaining = jsonObj['capacityRemaining']
+    startTime = jsonObj['startTime']
+    endTime = jsonObj['endTime']
+    category = jsonObj['category']
 
     connection.request('POST', '/1/classes/Cook', json.dumps({
-        "userId": user_id, # request.form['Description'],
-        "capacityRemaining": capacity_remaining, # request.form['Category'],
+        "userId": userId, # request.form['Description'],
+        "capacityRemaining": capacityRemaining, # request.form['Category'],
         "endTime": {
             "__type": "Date",
             "iso": endTime, #request.form['endTime']
@@ -189,7 +193,7 @@ def create_cook():
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read()) 
-    return json.dumps(result)
+    return Response(json.dumps({'cookId': result['objectId']}),  mimetype='application/json')
 
 
 #----------Is user routes------------------------------------------------
@@ -209,58 +213,59 @@ def is_user_cook(userId):
     result = json.loads(connection.getresponse().read())
 
     if len(result['results']) == 1:
-        return json.dumps({'isCook': True})
+        return Response(json.dumps({'isCook': True}),  mimetype='application/json')
     else:
-        return json.dumps({'isCook': False})
+        return Response(json.dumps({'isCook': False}),  mimetype='application/json')
+
 
 
 #----------Authentication------------------------------------------------
 
 
-@app.route('/signup', methods=['POST'])
-def signup():
-    connection = httplib.HTTPSConnection('api.parse.com', 443)
-    connection.connect()
-    connection.request('POST', '/1/users', json.dumps({
-        "username": "cooldude26",
-        "password": "p_n7!-e823",
-        "fullName": "Cool Dude Man",
-        "address": {
-            "__type": "GeoPoint",
-            "latitude": 40.0,
-            "longitude": -30.0
-        },
-        "phone": "4153920202"
-        }), {
-            "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
-            "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
-            "Content-Type": "application/json"
-        })
-    result = json.loads(connection.getresponse().read())
-    # TODO: save session token somehow
-    print result
-    return "result"
+# @app.route('/signup', methods=['POST'])
+# def signup():
+#     connection = httplib.HTTPSConnection('api.parse.com', 443)
+#     connection.connect()
+#     connection.request('POST', '/1/users', json.dumps({
+#         "username": "cooldude26",
+#         "password": "p_n7!-e823",
+#         "fullName": "Cool Dude Man",
+#         "address": {
+#             "__type": "GeoPoint",
+#             "latitude": 40.0,
+#             "longitude": -30.0
+#         },
+#         "phone": "4153920202"
+#         }), {
+#             "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+#             "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+#             "Content-Type": "application/json"
+#         })
+#     result = json.loads(connection.getresponse().read())
+#     # TODO: save session token somehow
+#     print result
+#     return "result"
 
 
-@app.route('/signin', methods=['POST'])
-def signin():
-    connection = httplib.HTTPSConnection('api.parse.com', 443)
-    params = urllib.urlencode({"username":"cooldude6","password":"p_n7!-e8"})
-    connection.connect()
-    connection.request('GET', '/1/login?%s' % params, '', {
-        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
-        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
-    })
-    result = json.loads(connection.getresponse().read())
-    print result
-    # do something with sessionToken
-    return "result"
+# @app.route('/signin', methods=['POST'])
+# def signin():
+#     connection = httplib.HTTPSConnection('api.parse.com', 443)
+#     params = urllib.urlencode({"username":"cooldude6","password":"p_n7!-e8"})
+#     connection.connect()
+#     connection.request('GET', '/1/login?%s' % params, '', {
+#         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+#         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+#     })
+#     result = json.loads(connection.getresponse().read())
+#     print result
+#     # do something with sessionToken
+#     return "result"
 
 
-@app.route('/logout', methods=['POST'])
-def logout():
-    # clear session token
-    return "result"
+# @app.route('/logout', methods=['POST'])
+# def logout():
+#     # clear session token
+#     return "result"
 
 
 # --------------------------------------------------------------
