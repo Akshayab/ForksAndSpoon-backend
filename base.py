@@ -1,8 +1,13 @@
 from flask import Flask, request, Response
 import json, httplib, urllib
+from twilio.rest import TwilioRestClient
+
 app = Flask(__name__)
 
+account_sid = "AC4e620c43197c008d54f2ceb4ac2eb800"
+auth_token = "2c2f64ac39a94c064ab20ba1f8945eab"
 
+client = TwilioRestClient(account_sid, auth_token)
 # --------- GET calls------------------------
 
 
@@ -31,7 +36,7 @@ def get_food():
 
 
 @app.route('/get_food/<foodId>', methods=['GET'])
-def get_menu(foodId):
+def get_foods(foodId):
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
     connection.request('GET', '/1/classes/Food/'+foodId, '', {
@@ -156,7 +161,7 @@ def create_order():
     cookId = jsonObj['cookId']
     hungryId = jsonObj['hungryId'] # hard coded userId
     selectedFoodItems = jsonObj['selectedFoodItems']
-
+    twilioMessage = jsonObj['twilioMessage']
     connection.request('GET', '/1/classes/Cook/'+cookId, '', {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
@@ -177,6 +182,7 @@ def create_order():
        "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())
+
     connection.request('POST', '/1/classes/Order', json.dumps({
         "cookId": cookId,
         "hungryId": hungryId,
@@ -186,7 +192,13 @@ def create_order():
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
         "Content-Type": "application/json"
     })
+    #Get hungry user details given hungry user id.
     result = json.loads(connection.getresponse().read())
+
+
+    message = client.messages.create(body=twilioMessage,
+    to="+16477705032",
+    from_="+16475603953",)
     return Response(json.dumps({'orderId': result['objectId']}),  mimetype='application/json')
 
 
