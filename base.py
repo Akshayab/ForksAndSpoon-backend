@@ -1,12 +1,7 @@
 from flask import Flask, request, Response
-from twilio.rest import TwilioRestClient
 import json, httplib, urllib
 app = Flask(__name__)
 
-
-account_sid = "ACa14d74bd2ff643efac70cff8c2999677"
-auth_token  = "8800b6f69dd54312b6e0ebc62d7c47d1"
-client = TwilioRestClient(account_sid, auth_token)
 
 # --------- GET calls------------------------
 
@@ -83,11 +78,13 @@ def create_food():
     description = jsonObj['description']
     dietaryRestriction = jsonObj['dietaryRestriction']
     spicyLevel = jsonObj['spicyLevel']
+    price = jsonObj['price']
     connection.request('POST', '/1/classes/Food', json.dumps({
         "name": name,
         "description": description,
         "dietaryRestriction": dietaryRestriction,
         "spicyLevel": spicyLevel,
+        "price": price,
     }), {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
@@ -166,12 +163,6 @@ def create_order():
         "Content-Type": "application/json"
     })
     result = json.loads(connection.getresponse().read())
-
-    message = client.messages.create(body="Hey man, hows it going?",
-    to="+15197813466",
-    from_="+12268940954")
-
-    print(message.sid)
     return Response(json.dumps({'orderId': result['objectId']}),  mimetype='application/json')
 
 
@@ -227,6 +218,7 @@ def is_user_cook(userId):
         return Response(json.dumps({'isCook': True}),  mimetype='application/json')
     else:
         return Response(json.dumps({'isCook': False}),  mimetype='application/json')
+
 
 
 #----------Authentication------------------------------------------------
