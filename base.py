@@ -157,11 +157,15 @@ def create_menu():
 def create_order():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    jsonObj = request.json
-    cookId = jsonObj['cookId']
-    hungryId = jsonObj['hungryId'] # hard coded userId
-    selectedFoodItems = jsonObj['selectedFoodItems']
-    twilioMessage = jsonObj['twilioMessage']
+    print("zsagvr")
+    #jsonObj = request.json
+    cookId = 'eWmn7hZ5ue'#jsonObj['cookId']
+    print(cookId)
+    hungryId = 'kVPzQNpR0h'#jsonObj['hungryId'] # hard coded userId
+    print(hungryId)
+    selectedFoodItems = ["b5n8HUrL4C"] #jsonObj['selectedFoodItems']
+    print(selectedFoodItems)
+    twilioMessage = "twiiiii"
     connection.request('GET', '/1/classes/Cook/'+cookId, '', {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
@@ -199,6 +203,7 @@ def create_order():
     message = client.messages.create(body=twilioMessage,
     to="+16477705032",
     from_="+16475603953",)
+    print(message.sid)
     return Response(json.dumps({'orderId': result['objectId']}),  mimetype='application/json')
 
 
