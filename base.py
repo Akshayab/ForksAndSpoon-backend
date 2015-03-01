@@ -18,6 +18,30 @@ def get_cooks():
     return Response(json.dumps(result),  mimetype='application/json')
 
 
+@app.route('/get_food', methods=['GET'])
+def get_food():
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    connection.request('GET', '/1/classes/Food/', '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    })
+    result = json.loads(connection.getresponse().read())
+    return Response(json.dumps(result),  mimetype='application/json')
+
+
+@app.route('/get_food/<foodId>', methods=['GET'])
+def get_menu(foodId):
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    connection.request('GET', '/1/classes/Food/'+foodId, '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    })
+    result = json.loads(connection.getresponse().read())
+    return Response(json.dumps(result),  mimetype='application/json')
+
+
 @app.route('/get_menu', methods=['GET'])
 def get_menus():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
