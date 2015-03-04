@@ -11,7 +11,6 @@ auth_token = "2c2f64ac39a94c064ab20ba1f8945eab"
 client = TwilioRestClient(account_sid, auth_token)
 # --------- GET calls------------------------
 
-
 @app.route('/get_cook', methods=['GET'])
 def get_cooks():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
@@ -111,6 +110,7 @@ def promo_email():
     result = json.loads(connection.getresponse().read())    
     return Response(json.dumps(result),  mimetype='application/json')
 
+
 #--------Create Menu, Cook, Order----------------------------------------------
 
 
@@ -169,59 +169,10 @@ def create_menu():
     return Response(json.dumps({"menuId": menuId}),  mimetype='application/json') # This should be a success message or error message
 
 
-# @app.route('/create_order', methods=['POST'])
-# def create_order():
-#     connection = httplib.HTTPSConnection('api.parse.com', 443)
-#     connection.connect()
-#     jsonObj = request.json
-#     cookId = jsonObj['cookId']
-#     hungryId = jsonObj['hungryId'] # hard coded userId
-#     twilioMessage = jsonObj['twilioMessage']
-#     selectedFoodItems = jsonObj['selectedFoodItems']
-
-#     connection.request('GET', '/1/classes/Cook/'+cookId, '', {
-#         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
-#         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
-#         "Content-Type": "application/json" 
-#     })
-#     result = json.loads(connection.getresponse().read())
-#     if(result['capacityRemaining'] == 0):
-#         return Response(json.dumps({'error': "Sorry, capacity limit reached"}),  mimetype='application/json')
-
-#     connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
-#        "capacityRemaining": {
-#             "__op": "Increment",
-#             "amount": -1
-#         }
-#     }), {
-#        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
-#        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
-#        "Content-Type": "application/json"
-#     })
-#     result = json.loads(connection.getresponse().read())
-#     connection.request('POST', '/1/classes/Order', json.dumps({
-#         "cookId": cookId,
-#         "hungryId": hungryId,
-#         "selectedFoodItems": selectedFoodItems,
-#     }), {
-#         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
-#         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
-#         "Content-Type": "application/json"
-#     })
-#     result = json.loads(connection.getresponse().read())
-
-#     message = client.messages.create(body=twilioMessage,
-#     to="+16477705032",
-#     from_="+16475603953",)
-
-#     return Response(json.dumps({'orderId': "result['objectId']"}),  mimetype='application/json')
-
-
 @app.route('/create_order', methods=['POST'])
 def create_order():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    # print("zsagvr")
     jsonObj = request.json
     cookId = jsonObj['cookId'] # 'eWmn7hZ5ue'
     # print(cookId)
@@ -303,6 +254,64 @@ def create_cook():
     })
     result = json.loads(connection.getresponse().read()) 
     return Response(json.dumps({'cookId': result['objectId']}),  mimetype='application/json')
+
+
+@app.route('/create_rating', methods=['POST'])
+def create_rating():
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    jsonObj = request.json
+    orderId = jsonObj['orderId']
+    ratingNumber = jsonObj['ratingNumber']
+    comments = jsonObj['comments']
+    userId = jsonObj['userId'] # Obtain from user logged in.
+    print("getting order")
+    # Get cookId for the current order
+    connection.request('GET', '/1/classes/Order/'+orderId, '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    })
+    result = json.loads(connection.getresponse().read())
+    cookId = result['cookId']
+    
+    print("create rating object")
+    # Create a Rating object
+    connection.request('POST', '/1/classes/Rating', json.dumps({
+        "cookId": cookId,
+        "comments": comments,
+        "ratingNumber": ratingNumber,
+        "userId": userId,
+        "orderId": orderId,
+    }), {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+        "Content-Type": "application/json"
+    })
+    result = json.loads(connection.getresponse().read())
+    ratingId = result['objectId']
+    
+    print(ratingId)
+    # Append ratingId to the cook's current array of ratingIds.
+    
+    print("adding stuff to cook")
+    connection.request('PUT', '/1/classes/Cook/'+cookId, json.dumps({
+       "ratingIds": {
+         "__op": "Add",
+         "objects": [ratingId]
+       }
+     }), {
+       "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+       "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV",
+       "Content-Type": "application/json"
+     })
+    
+    return Response(json.dumps({'ratingId': ratingId}),  mimetype='application/json')
+    
+
+#----------Update routes-------------------------------------------------
+
+
+
 
 
 #----------Is user routes------------------------------------------------
