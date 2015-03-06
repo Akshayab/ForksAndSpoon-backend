@@ -11,6 +11,7 @@ auth_token = "2c2f64ac39a94c064ab20ba1f8945eab"
 client = TwilioRestClient(account_sid, auth_token)
 # --------- GET calls------------------------
 
+# Gets all cooks
 @app.route('/get_cook', methods=['GET'])
 def get_cooks():
     connection = httplib.HTTPSConnection('api.parse.com', 443)
@@ -23,11 +24,36 @@ def get_cooks():
     return Response(json.dumps(result),  mimetype='application/json')
 
 
-@app.route('/get_food', methods=['GET'])
-def get_foods():
+@app.route('/get_cook/<category>', methods=['GET'])
+def get_cook_filters(category):
     connection = httplib.HTTPSConnection('api.parse.com', 443)
     connection.connect()
-    connection.request('GET', '/1/classes/Food/', '', {
+    params = urllib.urlencode({"where":json.dumps({
+        "category": category,
+    })})
+    connection.request('GET', '/1/classes/Cook?%s' % params, '', {
+        "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
+        "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
+    })
+    result = json.loads(connection.getresponse().read())
+    return Response(json.dumps(result),  mimetype='application/json')
+
+
+@app.route('/get_food/<dietaryRestriction>/<spicyLevel>', methods=['GET'])
+def get_foods(dietaryRestriction, spicyLevel):
+    spicyLevel = int(spicyLevel)
+    connection = httplib.HTTPSConnection('api.parse.com', 443)
+    connection.connect()
+    if spicyLevel == 0:
+        params = urllib.urlencode({"where":json.dumps({
+            "dietaryRestriction": dietaryRestriction,
+        })})
+    else:
+        params = urllib.urlencode({"where":json.dumps({
+            "dietaryRestriction": dietaryRestriction,
+            "spicyLevel": spicyLevel,
+        })})
+    connection.request('GET', '/1/classes/Food?%s' % params, '', {
         "X-Parse-Application-Id": "mL4QwznW8QOvKhqbG9DpDRn42Kpj4rETCeLLEMju",
         "X-Parse-REST-API-Key": "Ld88eQRGwvTfe7ocsG2Gn5K942B9s8dOTlhGEvEV"
     })
