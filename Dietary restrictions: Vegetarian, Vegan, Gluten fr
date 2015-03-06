@@ -1,0 +1,43 @@
+Dietary restrictions: Vegetarian, Vegan, Gluten free, Halal, None
+Categories: text
+
+Menu:
+Description: text
+Categories: text
+Dietary restrictions checkbox (limited choices)
+Spice level: checkbox (limited choices)
+Time valid: After this time, delete from database. Time valid = createdAt to endTime 
+
+Order:
+Cook id
+Hungry id
+Menu id
+
+
+Cook:
+User id
+Capacity
+
+
+Hungry:
+User id
+
+
+
+User:
+Name
+Username
+Phone number
+Address
+Image
+
+
+
+
+Currently user2?
+If the user is not currently user2, assume he is user1
+Hence, a user2 cannot be user1 at the same time
+
+
+
+
